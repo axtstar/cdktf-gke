@@ -1,0 +1,8 @@
+{
+	"name": "cdk for terraform for gke",
+	"dockerComposeFile": [
+		"../docker-compose.yaml"
+	],
+	"service": "app",
+	"workspaceFolder": "/app"
+}

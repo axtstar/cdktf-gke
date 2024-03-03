@@ -1,0 +1,14 @@
+{
+  "language": "typescript",
+  "app": "npx ts-node main.ts",
+  "sendCrashReports": "false",
+  "terraformProviders": [
+    "hashicorp/google@~> 5.0",
+    "hashicorp/kubernetes@~> 2.0",
+    "hashicorp/helm@~> 2.0",
+    "hashicorp/local@~> 2.0",
+    "hashicorp/null@~> 3.0"
+  ],
+  "terraformModules": [],
+  "context": {}
+}
