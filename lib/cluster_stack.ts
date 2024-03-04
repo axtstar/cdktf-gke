@@ -56,7 +56,9 @@ export class ClusterStack extends GoogleStack {
             project: Common.get_project_id(),
             name: Common.get_cluster(),
             location: Common.get_location(),
-            initialNodeCount: 0,
+            initialNodeCount: 1,
+            // destroyで削除できるように設定
+            deletionProtection: false,
             enableL4IlbSubsetting: true,
             // デフォルトのノードプールを削除
             removeDefaultNodePool: true,
