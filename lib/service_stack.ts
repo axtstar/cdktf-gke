@@ -12,6 +12,7 @@ interface ServiceStackOptions {
     bindIp: string,
     workloadName: string,
     targetPort: number
+    isInternal: boolean
 }
 
 export class ServiceStack extends GoogleStack {
@@ -51,6 +52,17 @@ export class ServiceStack extends GoogleStack {
             loadBalancerIP = { loadBalancerIP: globalAddress.address }
         }
 
+        let additional_metadata = {}
+        if (options.isInternal) {
+            additional_metadata = {
+                annotations: {
+                    // This makes the load balancer internal
+                    'cloud.google.com/load-balancer-type': 'Internal',
+                    'cloud.google.com/neg': '{"ingress": true}'
+                },
+            }
+        }
+
         // Service設定
         new manifest.Manifest(this, id, {
             provider: kubernetesProvider, // Your Kubernetes provider
@@ -60,6 +72,7 @@ export class ServiceStack extends GoogleStack {
                 metadata: {
                     name: options.name,
                     namespace: 'default',
+                    ...additional_metadata
                 },
                 spec: {
                     type: 'LoadBalancer', // Serviceの種類をLoadBalancerに設定

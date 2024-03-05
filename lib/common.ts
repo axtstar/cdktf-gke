@@ -88,4 +88,8 @@ export class Common {
         return process.env.enable_ips!.split("|")
     }
 
+    static get_api_url(): string {
+        return process.env.API_URL!
+    }
+
 }

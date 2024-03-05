@@ -19,6 +19,7 @@ new ServiceStack(app, "service", {
     bindIp: "sample-servie-ip",
     workloadName: "sample-workload",
     targetPort: 8501,
+    isInternal: false,
 })
 
 new WorkloadStack(app, "workload", {
@@ -41,7 +42,7 @@ new WorkloadStack(app, "workload", {
         }
     },
     env: [
-        { name: "GPUID", value: "0" }
+        { name: "API_URL", value: Common.get_api_url() }
     ]
 })
 
@@ -61,11 +62,12 @@ new ServiceStack(app, "service2", {
     bindIp: "",
     workloadName: "workload2",
     targetPort: 8000,
+    isInternal: true,
 })
 
 new WorkloadStack(app, "workload2", {
     name: "workload2",
-    nodeSelector: "sample-nodepool2",
+    nodeSelector: "nodepool2",
     podCount: 1,
     maxPodCount: 1,
     networkTag: "",
@@ -73,15 +75,15 @@ new WorkloadStack(app, "workload2", {
     resourceRequest: {
         requests: {
             "nvidia.com/gpu": 1,
-            cpu: '1000m',
-            memory: '6Gi',
+            cpu: '1100m',
+            memory: '8Gi',
         }
     },
     resourceLimit: {
         limits: {
             "nvidia.com/gpu": 1,
-            cpu: '2000m',
-            memory: '8Gi',
+            cpu: '1800m',
+            memory: '12Gi',
         }
     }
 })

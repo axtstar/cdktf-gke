@@ -96,7 +96,7 @@ export class WorkloadStack extends GoogleStack {
         })
 
         // 水平Pod自動スケーリング（HPA）設定
-        new manifest.Manifest(scope, `hpa`, {
+        new manifest.Manifest(scope, `hpa-${options.name}`, {
             fieldManager: {
                 forceConflicts: true,
             },
@@ -105,7 +105,7 @@ export class WorkloadStack extends GoogleStack {
                 apiVersion: 'autoscaling/v2',
                 kind: 'HorizontalPodAutoscaler',
                 metadata: {
-                    name: `hpa`,
+                    name: `hpa-${options.name}`,
                     namespace: 'default',
                     labels: {
                         app: options.name

@@ -34,11 +34,12 @@ export class NodePoolStack extends GoogleStack {
         let gpu: any = {}
         if (options.gpuName != "") {
             gpu = {
+                imageType: "COS_CONTAINERD",
                 guestAccelerator: [
                     {
                         count: 1,
                         type: options.gpuName,
-                        gpuDriverInstallationConfig: [{ gpuDriverVersion: "DEFAULT", }],
+                        gpuDriverInstallationConfig: [{ gpuDriverVersion: "LATEST", }],
                         gpuPartitionSize: "",
                         gpuSharingConfig: [],
                     },
