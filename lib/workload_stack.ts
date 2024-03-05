@@ -6,9 +6,21 @@ import { GKEAuth } from 'cdktf-gke-auth'
 import { Common } from "./common"
 import { GoogleStack } from "./google_stack"
 
+interface WorkloadStackOptions {
+    nodeSelector: string
+    name: string
+    podCount: number
+    maxPodCount: number
+    networkTag: string
+    containerImage: string
+    resourceRequest?: {}
+    resourceLimit?: {},
+    env?: [{}]
+}
+
 export class WorkloadStack extends GoogleStack {
 
-    constructor(scope: Construct, id: string) {
+    constructor(scope: Construct, id: string, options: WorkloadStackOptions) {
         super(scope, id);
 
         const _auth = new GKEAuth(this, "gke-auth", {
@@ -18,13 +30,14 @@ export class WorkloadStack extends GoogleStack {
         })
 
         // ワークロード
-        this.create_workload(scope = this, id, _auth)
+        this.create_workload(scope = this, id, _auth, options)
     }
 
     create_workload(
         scope: any,
         id: string,
-        auth: GKEAuth
+        auth: GKEAuth,
+        options: WorkloadStackOptions
     ): void {
 
         const kubernetesProvider = new provider.KubernetesProvider(scope, `provider`,
@@ -40,48 +53,41 @@ export class WorkloadStack extends GoogleStack {
                 apiVersion: 'apps/v1',
                 kind: 'Deployment',
                 metadata: {
-                    name: Common.get_workload_name(),
+                    name: options.name,
                     namespace: 'default',
                     labels: {
-                        app: Common.get_workload_name()
+                        app: options.name,
+                        networkTag: options.networkTag,
                     }
                 },
                 spec: {
-                    replicas: Common.pool_node_count(),
+                    replicas: options.podCount,
                     selector: {
                         matchLabels: {
-                            app: Common.get_workload_name(),
+                            app: options.name,
                         },
                     },
                     template: {
                         metadata: {
                             labels: {
-                                app: Common.get_workload_name(),
+                                app: options.name,
                             },
                         },
                         spec: {
                             containers: [
                                 {
-                                    name: Common.get_workload_name(),
-                                    image: Common.get_container_image(),
+                                    name: options.name,
+                                    image: options.containerImage,
                                     imagePullPolicy: 'IfNotPresent',
                                     resources: {
-                                        requests: {
-                                            "nvidia.com/gpu": 1,
-                                            cpu: '1000m',
-                                            memory: '6Gi',
-                                        },
-                                        limits: {
-                                            "nvidia.com/gpu": 1,
-                                        }
+                                        ...options.resourceRequest,
+                                        ...options.resourceLimit,
                                     },
-                                    env: [
-                                        { name: "GPUID", value: "0" }
-                                    ]
+                                    env: options.env,
                                 },
                             ],
                             nodeSelector: {
-                                "cloud.google.com/gke-nodepool": Common.get_nodepool_name()
+                                "cloud.google.com/gke-nodepool": options.nodeSelector
                             },
                         },
                     },
@@ -102,17 +108,17 @@ export class WorkloadStack extends GoogleStack {
                     name: `hpa`,
                     namespace: 'default',
                     labels: {
-                        app: Common.get_workload_name()
+                        app: options.name
                     }
                 },
                 spec: {
                     scaleTargetRef: {
                         apiVersion: 'apps/v1',
                         kind: 'Deployment',
-                        name: Common.get_workload_name(),
+                        name: options.name,
                     },
                     minReplicas: 1,
-                    maxReplicas: Common.pool_total_max_node_count(),
+                    maxReplicas: options.maxPodCount,
                     metrics: [
                         {
                             type: 'Resource',
@@ -132,27 +138,6 @@ export class WorkloadStack extends GoogleStack {
                                     type: 'Utilization',
                                     averageUtilization: 80,
                                 },
-                            },
-                        },
-                        {
-                            // supported values: "ContainerResource", "External", "Object", "Pods", "Resource"
-                            type: 'External',
-                            external: {
-                                metric: {
-                                    name: 'prometheus.googleapis.com|DCGM_FI_DEV_GPU_UTIL|gauge',
-                                    selector: {
-                                        matchLabels: {
-                                            "resource.labels.project_id": Common.get_project_id(),
-                                            "resource.labels.cluster": Common.get_cluster(),
-                                            "resource.labels.exported_namespace": "default",
-                                            "metric.labels.exported_container": Common.get_workload_name(),
-                                        }
-                                    }
-                                },
-                                target: {
-                                    type: 'AverageValue',
-                                    averageValue: '80',
-                                }
                             },
                         },
                     ],

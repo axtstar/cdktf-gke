@@ -4,13 +4,23 @@ import { ContainerNodePool } from '../.gen/providers/google/container-node-pool'
 import { Common } from "./common"
 import { GoogleStack } from "./google_stack"
 
+interface NodePoolStackOptions {
+    poolName: string
+    nodeCount: number
+    totalMaxNodeCount: number
+    totalMinNodeCount: number
+    gpuName: string
+    machineType: string
+    tags: string[]
+}
+
 export class NodePoolStack extends GoogleStack {
 
-    constructor(scope: Construct, id: string) {
+    constructor(scope: Construct, id: string, options: NodePoolStackOptions) {
         super(scope, id);
 
         // ノードプール設定
-        this.create_nodePool(this, id)
+        this.create_nodePool(this, id, options)
     }
 
 
@@ -18,16 +28,16 @@ export class NodePoolStack extends GoogleStack {
      * ノードプールを構築する
      * @param scope 
      */
-    create_nodePool(scope: any, id: string) {
+    create_nodePool(scope: any, id: string, options: NodePoolStackOptions) {
 
         // GPUの指定
         let gpu: any = {}
-        if (Common.get_gpu_name() != "") {
+        if (options.gpuName != "") {
             gpu = {
                 guestAccelerator: [
                     {
                         count: 1,
-                        type: Common.get_gpu_name(),
+                        type: options.gpuName,
                         gpuDriverInstallationConfig: [{ gpuDriverVersion: "DEFAULT", }],
                         gpuPartitionSize: "",
                         gpuSharingConfig: [],
@@ -39,17 +49,17 @@ export class NodePoolStack extends GoogleStack {
         // ノードプール設定
         new ContainerNodePool(scope, id, {
             project: Common.get_project_id(),
-            name: Common.get_nodepool_name(),
+            name: options.poolName,
             location: Common.get_location(),
             cluster: Common.get_cluster(),
-            nodeCount: Common.pool_node_count(),
+            nodeCount: options.nodeCount,
             nodeLocations: [Common.get_location()],
             autoscaling: {
-                totalMaxNodeCount: Common.pool_total_max_node_count(),
-                totalMinNodeCount: Common.pool_total_min_node_count(),
+                totalMaxNodeCount: options.totalMaxNodeCount,
+                totalMinNodeCount: options.totalMinNodeCount,
             },
             nodeConfig: {
-                machineType: Common.get_machine_name(), // マシンタイプ
+                machineType: options.machineType, // マシンタイプ
                 // GPU設定展開
                 ...gpu,
                 oauthScopes: [
@@ -63,6 +73,7 @@ export class NodePoolStack extends GoogleStack {
                     "https://www.googleapis.com/auth/servicecontrol",
                     "https://www.googleapis.com/auth/trace.append",
                 ],
+                tags: options.tags,
                 // Add more configurations as needed
             },
             // Add more configurations as needed

@@ -7,9 +7,16 @@ import { Common } from "./common"
 import { GoogleStack } from "./google_stack"
 import { ComputeAddress } from '../.gen/providers/google/compute-address'
 
+interface ServiceStackOptions {
+    name: string,
+    bindIp: string,
+    workloadName: string,
+    targetPort: number
+}
+
 export class ServiceStack extends GoogleStack {
 
-    constructor(scope: Construct, id: string) {
+    constructor(scope: Construct, id: string, options: ServiceStackOptions) {
         super(scope, id);
 
         const _auth = new GKEAuth(this, "gke-auth", {
@@ -19,25 +26,30 @@ export class ServiceStack extends GoogleStack {
         })
 
         // サービス
-        this.create_service(scope = this, id, _auth)
+        this.create_service(scope = this, id, _auth, options)
     }
 
     create_service(
         scope: any,
         id: string,
-        auth: GKEAuth
+        auth: GKEAuth,
+        options: ServiceStackOptions
     ): void {
 
         const kubernetesProvider = new provider.KubernetesProvider(scope, `provider`,
             { ...auth.authCredentials, alias: `provider` })
 
         // 固定IP指定
-        const staticIpName = Common.get_ip_name()
-        const globalAddress = new ComputeAddress(this, 'compute_address', {
-            name: staticIpName,
-            project: Common.get_project_id(),
-            region: Common.get_region(),
-        })
+        let loadBalancerIP = {}
+        if (options.bindIp != "") {
+            const staticIpName = options.bindIp
+            const globalAddress = new ComputeAddress(this, 'compute_address', {
+                name: staticIpName,
+                project: Common.get_project_id(),
+                region: Common.get_region(),
+            })
+            loadBalancerIP = { loadBalancerIP: globalAddress.address }
+        }
 
         // Service設定
         new manifest.Manifest(this, id, {
@@ -46,21 +58,23 @@ export class ServiceStack extends GoogleStack {
                 apiVersion: 'v1',
                 kind: 'Service',
                 metadata: {
-                    name: Common.get_service_name(),
+                    name: options.name,
                     namespace: 'default',
                 },
                 spec: {
                     type: 'LoadBalancer', // Serviceの種類をLoadBalancerに設定
-                    loadBalancerIP: globalAddress.address, // バインドしたいIPアドレスを指定
+                    // バインドしたいIPアドレスを指定
+                    ...loadBalancerIP,
+                    // Serviceのポート設定
                     ports: [
                         {
                             port: 80,
-                            targetPort: 3000,
+                            targetPort: options.targetPort,
                             protocol: 'TCP',
                         },
                     ],
                     selector: {
-                        app: Common.get_workload_name(),
+                        app: options.workloadName,
                     },
                 },
             },

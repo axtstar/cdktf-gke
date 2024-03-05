@@ -4,14 +4,6 @@ export class Common {
     // =====汎用設定=====
 
     /**
-     * 環境名を取得する
-     * @returns
-     */
-    static get_env() {
-        return process.env.env!
-    }
-
-    /**
      * GCPのプロジェクトIDを取得する
      */
     static get_project_id() {
@@ -53,38 +45,6 @@ export class Common {
         return process.env.resource_labels || ""
     }
 
-    // =====クラスタ構築=====
-
-    /**
-     * クラスタ名を取得する
-     */
-    static get_cluster() {
-        return process.env.cluster!
-    }
-
-
-    // =====ノードプール設定=====
-
-    static get_nodepool_name() {
-        return process.env.nodepool_name!
-    }
-
-    /**
-     * nodepoolで使用するマシンタイプを取得する
-     * @returns 
-     */
-    static get_machine_name() {
-        return process.env.machine_name!
-    }
-
-    /**
-     * nodepoolで使用するGPUタイプを取得する
-     * @returns 
-     */
-    static get_gpu_name() {
-        return process.env.gpu_name || ""
-    }
-
     /**
      * terraformの状態を保存するバケット名を取得する
      * @returns 
@@ -102,50 +62,30 @@ export class Common {
     }
 
     /**
-     * nodepoolの起動ノード数を取得する
-     * @returns 
+     * クラスタ名を取得する
      */
-    static pool_node_count(): number {
-        return Number(process.env.pool_node_count) || 0
+    static get_cluster() {
+        return process.env.cluster!
     }
 
     /**
-     * オートスケール時の最大ノード数を取得する
+     * コンテナイメージを取得する(軽め想定)
      * @returns 
      */
-    static pool_total_max_node_count(): number {
-        return Number(process.env.pool_total_max_node_count) || 0
+    static get_container_image1(): string {
+        return process.env.container_image1!
     }
 
     /**
-     * オートスケール時の最小ノード数を取得する
+     * コンテナイメージを取得する(重め想定)
      * @returns 
      */
-    static pool_total_min_node_count(): number {
-        return Number(process.env.pool_total_min_node_count) || 0
+    static get_container_image2(): string {
+        return process.env.container_image2!
     }
 
-    // =====サービス設定=====
-    static get_service_name(): string {
-        return process.env.service_name!
-    }
-
-    static get_ip_name(): string {
-        return process.env.ip_name!
-    }
-
-    // =====ワークロード設定=====
-
-    static get_workload_name(): string {
-        return process.env.workload_name!
-    }
-
-    /**
-     * コンテナイメージを取得する
-     * @returns 
-     */
-    static get_container_image(): string {
-        return process.env.container_image!
+    static get_enable_ips(): string[] {
+        return process.env.enable_ips!.split("|")
     }
 
 }
